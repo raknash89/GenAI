@@ -1,0 +1,50 @@
+# !pip install langchain==0.1.7
+# !pip install langchain_ibm 
+# !pip install wget
+# !pip install sentence-transformers
+# !pip install chromadb==0.3.26
+# #!pip install "ibm-watsonx-ai>=0.1.7
+# !pip install pydantic==1.10.0
+# !pip install sqlalchemy==2.0.1
+#!pip install -qU langchain-ibm
+
+import os, getpass
+
+credentials = {
+    "url": "https://us-south.ml.cloud.ibm.com",
+    "apikey": "key"
+}
+project_id = "69869427-780b-4d5e-ae04-4066822eaaa7"
+
+import wget
+
+filename = 'state_of_the_union.txt'
+url = 'https://raw.github.com/IBM/watson-machine-learning-samples/master/cloud/data/foundation_models/state_of_the_union.txt'
+
+if not os.path.isfile(filename):
+    wget.download(url, out=filename)
+
+with open(filename, 'r', encoding='utf-8') as f:
+    text_data = f.read()
+text_data
+#docs = text_data.load()
+
+
+
+parameters = {
+    "decoding_method": "sample",
+    "max_new_tokens": 100,
+    "min_new_tokens": 1,
+    "temperature": 0.5,
+    "top_k": 50,
+    "top_p": 1,
+}
+
+from langchain_ibm import WatsonxLLM
+
+watsonx_llm = WatsonxLLM(
+    model_id="ibm/granite-13b-instruct-v2",
+    url="https://eu-de.ml.cloud.ibm.com",
+    project_id=project_id,
+    params=parameters,
+)
