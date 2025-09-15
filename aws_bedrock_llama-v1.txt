@@ -1,0 +1,400 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import boto3, json,os\n",
+    "\n",
+    "bedrock_runtime = boto3.client(\n",
+    "    service_name=\"bedrock-runtime\",\n",
+    "    region_name=\"us-east-1\"\n",
+    ")\n",
+    "os.environ[\"AWS_REGION\"] = \"us-east-1\"\n",
+    "#os.environ[\"AWS_ACCESS_KEY_ID\"] = \"AKIA6K4VGMKKEAP7JAXA\"\n",
+    "#os.environ[\"AWS_SECRET_ACCESS_KEY\"] = \"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\"\n",
+    "os.environ[\"AWS_ACCESS_KEY_ID\"] = \"AKIA6K4VGMKKJ3IU5CXW\"\n",
+    "os.environ[\"AWS_SECRET_ACCESS_KEY\"] = \"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\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "prompt = \"\"\" [INST] You are an expert in COBOL programming and documentation. Given a COBOL code snippet, your task is to analyze and separate the code based on rule classifications and rule types. For each segregated section, provide the corresponding rule classification, rule type, and the actual code. Segregated code should match with the given cobol code. Additionally, perform a thorough Business Rule Extraction and create a comprehensive Business Rule Extraction Summary for each code segment.\n",
+    "Consider the business logic and any comments within the COBOL code to enhance the extraction and summarization process. For each code segment, present the information in the following JSON format:\n",
+    "\n",
+    "    'Rule Type': '...',\n",
+    "    'Rule Classification': '...',\n",
+    "    'Paragraph Name': '...',\n",
+    "    'Segregated Code': [\n",
+    "       'line 1 of segregated code',\n",
+    "       'line 2 of segregated code',\n",
+    "       'line 3 of segregated code',\n",
+    "       '...'\n",
+    "     ],\n",
+    "    'Business Rule Extraction': '...',\n",
+    "    'Business Rule Extraction Summary': '...'\n",
+    "\n",
+    "Give me only the json in a list ,and do not include any additional information in the response. Here is the cobol code:\n",
+    "\n",
+    "       C000-WRITE-REPORT-PARA                                           02150000\n",
+    "           .                                                            02160000\n",
+    "                                                                        02170000\n",
+    "           EXEC SQL                                                     02180000\n",
+    "                OPEN AGENTCUR                                           02190000\n",
+    "           END-EXEC                                                     02200000\n",
+    "                                                                        02210000\n",
+    "           IF SQLCODE NOT EQUAL        TO ZERO THEN                     02220000\n",
+    "             PERFORM A002-SQL-HANDLING-PARA                             02230000\n",
+    "             STOP RUN                                                   02240000\n",
+    "           END-IF                                                       02250000\n",
+    "                                                                        02260000\n",
+    "           PERFORM C001-WRITE-HEADING-PARA                              02270000\n",
+    "           PERFORM E000-FETCH-PARA                                      02280000\n",
+    "           PERFORM C002-WRITE-FOOTER-PARA                               02290000\n",
+    "           .                                                            02300000  [/INST]\n",
+    "\"\"\"\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "prompt = \"\"\" [INST] I'm trying to invoke claude v2 model from python using endpoint. I'm getting the following error. Can you help me to resolve this issue?\n",
+    "\n",
+    "@app.route('/gen/awsclaude', methods =[\"POST\"])\n",
+    "def callaws_claude():\n",
+    "    prompt = request.data.decode('utf-8')\n",
+    "    print('Call AWS Bedrock API')\n",
+    "    print('prompt recieved \\n:',prompt,\"\\n\")\n",
+    "\n",
+    "    # Set the AWS Region\n",
+    "    region = 'us-east-1'\n",
+    "\n",
+    "    # Set the model ID\n",
+    "    stop_seq = [\"\\\\n\\\\nHuman:\"]\n",
+    "    model_id = 'anthropic.claude-v2'\n",
+    "    body = {\n",
+    "        \"prompt\": \"Human:\" + prompt + \"\\\\n\\\\nAssistant:\",\n",
+    "        \"max_tokens_to_sample\": 2000,\n",
+    "        \"temperature\": 0.5,\n",
+    "        \"top_k\": 250,\n",
+    "        \"top_p\": 1,\n",
+    "        \"stop_sequences\": stop_seq,\n",
+    "        \"anthropic_version\": \"bedrock-2023-05-31\"\n",
+    "    }\n",
+    "\n",
+    "\n",
+    "    # Set the API endpoint URL\n",
+    "    url = f'https://bedrock-runtime.region.amazonaws.com/invoke-model/model_id'\n",
+    "\n",
+    "    # Set the request headers\n",
+    "    headers = {\n",
+    "        'Content-Type': 'application/json',\n",
+    "        'Accept': 'application/json'\n",
+    "    }\n",
+    "\n",
+    "    # Make the POST request\n",
+    "    response = requests.post(url, headers=headers, json=body)\n",
+    "    print('response',response)\n",
+    "    print('response.text',response.text)\n",
+    "    # Check the response status code\n",
+    "    if response.status_code == 200:\n",
+    "        # Parse the response JSON\n",
+    "        result = response.json()\n",
+    "        print('result',result)\n",
+    "        #response_body = json.loads(response.get('body').read())\n",
+    "        #response_body\n",
+    "        response_body = json.loads(response.get('body').read())\n",
+    "        #print(response_body['completion'])\n",
+    "        #output_text = result['results'][0]['outputText']\n",
+    "        #print(output_text)\n",
+    "        return(result)\n",
+    "    else:\n",
+    "        print(f'Error: {response.status_code} - {response.text}')\n",
+    "        print(f\"Request failed with status code {response.status_code}:\")\n",
+    "        print(response.headers,response.text)\n",
+    "        return \"Error Calling API\"\n",
+    "    \n",
+    "if __name__ == '__main__':\n",
+    "\tapp.run() \n",
+    "\n",
+    "output:\n",
+    "response.text {\"Output\":{\"__type\":\"com.amazon.coral.service#UnknownOperationException\"},\"Version\":\"1.0\"}\n",
+    "\n",
+    "I was doubt on the url and path and invoking method. other than connection and parameters are fine i guess\n",
+    "\n",
+    "[/INST]\n",
+    "\"\"\".encode(\"unicode_escape\").decode(\"utf-8\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Llamma model body parameters"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "body = json.dumps({\n",
+    "    \"inputText\": prompt,\n",
+    "    \"textGenerationConfig\": {\n",
+    "        \"maxTokenCount\": 4096,\n",
+    "        \"stopSequences\": [],\n",
+    "        \"temperature\": 0,\n",
+    "        \"topP\": 1\n",
+    "    }\n",
+    "})"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# kwargs = { \n",
+    "#      \"modelId\": \"meta.llama2-70b-chat-v1\",\n",
+    "#  \"contentType\": \"application/json\",\n",
+    "#  \"accept\": \"application/json\",\n",
+    "#  \"body\": \"{\\\"prompt\\\":\\\"\"+ prompt +\"\\\",\\\"max_gen_len\\\":1000,\\\"temperature\\\":0.5,\\\"top_p\\\":0.9}\"\n",
+    "# }\n",
+    "# kwargs = {\n",
+    "#   \"modelId\": \"amazon.titan-text-lite-v1\",\n",
+    "#   \"contentType\": \"application/json\",\n",
+    "#   \"accept\": \"application/json\",\n",
+    "#   \"body\": json.dumps(\"{\\\"prompt\\\":\\\"[INST]You are a a very intelligent bot with exceptional critical thinking[/INST]\\\\nI went to the market and bought 10 apples. I gave 2 apples to your friend and 2 to the helper. I then went and bought 5 more apples and ate 1. How many apples did I remain with?\\\\n\\\\nLet's think step by step.\\\",\\\"maxTokenCount\\\":512,\\\"temperature\\\":0.5,\\\"top_p\\\":0.9}\")\n",
+    "# }\n",
+    "\n",
+    "kwargs = {\n",
+    "\"modelId\": \"amazon.titan-text-lite-v1\",\n",
+    "\"contentType\": \"application/json\",\n",
+    "\"accept\": \"application/json\",\n",
+    "\"body\": body\n",
+    "}\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Claude model v2 body parameters"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "body = \"{\\\"prompt\\\":\\\"\\\\n\\\\nHuman:\"+ \"testng framework\" + \"\\\\n\\\\nAssistant:\\\",\\\"max_tokens_to_sample\\\":300,\\\"temperature\\\":0.5,\\\"top_k\\\":250,\\\"top_p\\\":1,\\\"stop_sequences\\\":[\\\"\\\\n\\\\nHuman:\\\"],\\\"anthropic_version\\\":\\\"bedrock-2023-05-31\\\"}\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Or"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "stop_seq = [\"\\\\n\\\\nHuman:\"]\n",
+    "\n",
+    "body = json.dumps({\n",
+    "    \"prompt\": \"Human:\" + prompt + \"\\\\n\\\\nAssistant:\",\n",
+    "    \"max_tokens_to_sample\": 2000,\n",
+    "    \"stop_sequences\": stop_seq,\n",
+    "    \"temperature\": 0,\n",
+    "    \"top_k\":250,\n",
+    "    \"top_p\": 1,\n",
+    "    \"anthropic_version\":\"bedrock-2023-05-31\"\n",
+    "    }\n",
+    ")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{\"prompt\":\"\\n\\nHuman:testng framework\\n\\nAssistant:\",\"max_tokens_to_sample\":300,\"temperature\":0.5,\"top_k\":250,\"top_p\":1,\"stop_sequences\":[\"\\n\\nHuman:\"],\"anthropic_version\":\"bedrock-2023-05-31\"}\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(body)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "kwargs = {\n",
+    "  \"modelId\": \"anthropic.claude-v2\",\n",
+    "  \"contentType\": \"application/json\",\n",
+    "  \"accept\": \"application/json\",\n",
+    "  \"body\": body\n",
+    "}"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'modelId': 'anthropic.claude-v2',\n",
+       " 'contentType': 'application/json',\n",
+       " 'accept': 'application/json',\n",
+       " 'body': '{\"prompt\":\"\\\\n\\\\nHuman:testng framework\\\\n\\\\nAssistant:\",\"max_tokens_to_sample\":300,\"temperature\":0.5,\"top_k\":250,\"top_p\":1,\"stop_sequences\":[\"\\\\n\\\\nHuman:\"],\"anthropic_version\":\"bedrock-2023-05-31\"}'}"
+      ]
+     },
+     "execution_count": 9,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "kwargs"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "ename": "ClientError",
+     "evalue": "An error occurred (UnrecognizedClientException) when calling the InvokeModel operation: The security token included in the request is invalid.",
+     "output_type": "error",
+     "traceback": [
+      "\u001b[1;31m---------------------------------------------------------------------------\u001b[0m",
+      "\u001b[1;31mClientError\u001b[0m                               Traceback (most recent call last)",
+      "Cell \u001b[1;32mIn[10], line 1\u001b[0m\n\u001b[1;32m----> 1\u001b[0m response \u001b[38;5;241m=\u001b[39m bedrock_runtime\u001b[38;5;241m.\u001b[39minvoke_model(\u001b[38;5;241m*\u001b[39m\u001b[38;5;241m*\u001b[39mkwargs)\n\u001b[0;32m      2\u001b[0m \u001b[38;5;28mprint\u001b[39m(response)\n\u001b[0;32m      3\u001b[0m \u001b[38;5;66;03m#response = bedrock_runtime.invoke_model_with_response_stream(**kwargs)\u001b[39;00m\n\u001b[0;32m      4\u001b[0m \u001b[38;5;66;03m#event_stream = response['body']\u001b[39;00m\n",
+      "File \u001b[1;32m~\\AppData\\Roaming\\Python\\Python310\\site-packages\\botocore\\client.py:565\u001b[0m, in \u001b[0;36mClientCreator._create_api_method.<locals>._api_call\u001b[1;34m(self, *args, **kwargs)\u001b[0m\n\u001b[0;32m    561\u001b[0m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mTypeError\u001b[39;00m(\n\u001b[0;32m    562\u001b[0m         \u001b[38;5;124mf\u001b[39m\u001b[38;5;124m\"\u001b[39m\u001b[38;5;132;01m{\u001b[39;00mpy_operation_name\u001b[38;5;132;01m}\u001b[39;00m\u001b[38;5;124m() only accepts keyword arguments.\u001b[39m\u001b[38;5;124m\"\u001b[39m\n\u001b[0;32m    563\u001b[0m     )\n\u001b[0;32m    564\u001b[0m \u001b[38;5;66;03m# The \"self\" in this scope is referring to the BaseClient.\u001b[39;00m\n\u001b[1;32m--> 565\u001b[0m \u001b[38;5;28;01mreturn\u001b[39;00m \u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43m_make_api_call\u001b[49m\u001b[43m(\u001b[49m\u001b[43moperation_name\u001b[49m\u001b[43m,\u001b[49m\u001b[43m \u001b[49m\u001b[43mkwargs\u001b[49m\u001b[43m)\u001b[49m\n",
+      "File \u001b[1;32m~\\AppData\\Roaming\\Python\\Python310\\site-packages\\botocore\\client.py:1021\u001b[0m, in \u001b[0;36mBaseClient._make_api_call\u001b[1;34m(self, operation_name, api_params)\u001b[0m\n\u001b[0;32m   1017\u001b[0m     error_code \u001b[38;5;241m=\u001b[39m error_info\u001b[38;5;241m.\u001b[39mget(\u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mQueryErrorCode\u001b[39m\u001b[38;5;124m\"\u001b[39m) \u001b[38;5;129;01mor\u001b[39;00m error_info\u001b[38;5;241m.\u001b[39mget(\n\u001b[0;32m   1018\u001b[0m         \u001b[38;5;124m\"\u001b[39m\u001b[38;5;124mCode\u001b[39m\u001b[38;5;124m\"\u001b[39m\n\u001b[0;32m   1019\u001b[0m     )\n\u001b[0;32m   1020\u001b[0m     error_class \u001b[38;5;241m=\u001b[39m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mexceptions\u001b[38;5;241m.\u001b[39mfrom_code(error_code)\n\u001b[1;32m-> 1021\u001b[0m     \u001b[38;5;28;01mraise\u001b[39;00m error_class(parsed_response, operation_name)\n\u001b[0;32m   1022\u001b[0m \u001b[38;5;28;01melse\u001b[39;00m:\n\u001b[0;32m   1023\u001b[0m     \u001b[38;5;28;01mreturn\u001b[39;00m parsed_response\n",
+      "\u001b[1;31mClientError\u001b[0m: An error occurred (UnrecognizedClientException) when calling the InvokeModel operation: The security token included in the request is invalid."
+     ]
+    }
+   ],
+   "source": [
+    "response = bedrock_runtime.invoke_model(**kwargs)\n",
+    "print(response)\n",
+    "#response = bedrock_runtime.invoke_model_with_response_stream(**kwargs)\n",
+    "#event_stream = response['body']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "response['body']"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "if response.get('ResponseMetadata')['HTTPStatusCode'] == 200:\n",
+    "    print('yes')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "response_body = json.loads(response.get('body').read())\n",
+    "#response_body = json.loads(response.get())"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "print(response_body['completion'])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "result = response_body.get('results')\n",
+    "result[0].get('outputText')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "completion = response_body.get('completion')[0].get('data').get('text')\n",
+    "completion"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
